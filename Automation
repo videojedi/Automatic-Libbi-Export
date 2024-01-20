@@ -1,0 +1,32 @@
+alias: Automatic Libbi Export
+description: When current SoC equals the nominal SoC at this time
+trigger:
+  - platform: template
+    value_template: >
+      {% set SoC = states('sensor.myenergi_libbi_<SERIAL NUMBER>_soc') | int %} {% set
+      target_time = now().replace(hour=20, minute=30, second=0, microsecond=0)
+      %} {% set current_time = now() %} {% set t4 = ((current_time -
+      target_time).total_seconds() / 60) | int %} {% set nSoC = (t4* -0.56) +
+      100 | int %} {{ SoC | int >= nSoC }}
+condition:
+  - condition: device
+    device_id: <LIBBY DEVICE ID>
+    domain: select
+    entity_id: <LIBBY DEVICE ID>
+    type: selected_option
+    option: Normal
+action:
+  - service: notify.mobile_app_<MOBILE PHONE>
+    data:
+      title: Export Starting
+      message: >-
+        Libbi exporting {{ states('sensor.myenergi_libbi_<SERIAL NUMBER>_soc')|int *
+        states('sensor.myenergi_libbi_<SERIAL NUMBER>_battery_size')|int / 100 }}kWh to
+        grid.
+  - device_id: <LIBBY DEVICE ID>
+    domain: select
+    entity_id: <LIBBY DEVICE ID>
+    type: select_option
+    option: Export
+    enabled: true
+mode: single
